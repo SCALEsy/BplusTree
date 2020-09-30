@@ -1,22 +1,14 @@
 package com.sy.tree
 
 import java.lang.RuntimeException
+import java.util.concurrent.atomic.AtomicInteger
 
 data class Data(val data: Int?, val point: Node?)
 
 data class Node(val m: Int, val isLeave: Boolean = true) {
     val arr = arrayOfNulls<Data?>(m * 2 + 1)
     var size = 0
-
-    fun set(list: List<Int>) {
-        list.forEachIndexed { i, d ->
-            val ii = i * 2 + 1
-            //arr.add(Data(d, null))
-            //arr.add(null)
-            arr[ii] = Data(d, null)
-            size++
-        }
-    }
+    var id = 0
 
     fun find(data: Int): Int {
         var start = 0
@@ -101,12 +93,12 @@ data class Node(val m: Int, val isLeave: Boolean = true) {
 
 class BplusTree(val m: Int) {
     private var root = Node(m)
-
     fun spiltData(node: Node): Node {
         val half = m / 2
         node.size = half
         val less = m - half
         val b = Node(m, node.isLeave)
+        b.id = BplusTree.getId()
         System.arraycopy(node.arr, half * 2, b.arr, 0, less * 2 + 1)
         b.size = less
         node.arr.fill(null, half * 2)
@@ -136,9 +128,7 @@ class BplusTree(val m: Int) {
                     val x = new.arr[1]!!
                     if (node === root) {
                         root = Node(m, false)
-
-                        root.setData(1, x)
-                        root.size += 1
+                        root.addToLeave(0, x.data!!)
                         root.setNode(0, node)
                         root.setNode(2, new)
                     }
@@ -179,12 +169,7 @@ class BplusTree(val m: Int) {
         fun loop(node: Node): Int? {
             val i = node.find(d)
             if (node.isLeave) {
-                val x = if (i % 2 == 1) {
-                    node.arr[i]!!.data!!
-                } else {
-                    null
-                }
-                return x
+                return node.arr[i]?.data?.let { node.id }
             }
             val x = if (i % 2 == 1) {
                 i + 1
@@ -196,29 +181,35 @@ class BplusTree(val m: Int) {
         }
         return loop(root)
     }
+
+
+
+    companion object {
+        val ids = AtomicInteger()
+        fun getId(): Int {
+            return ids.incrementAndGet()
+        }
+    }
 }
 
 fun main() {
-    val node = BplusTree(4)
-    node.insert(1)
-    node.insert(2)
-    node.insert(3)
-    node.insert(4)
-    node.insert(5)
-    node.insert(6)
-
-    node.insert(7)
-    node.insert(8)
-
-    node.insert(9)
-    node.insert(10)
-    node.insert(11)
-    node.insert(12)
-    node.insert(13)
-    node.insert(14)
-    node.insert(15)
-    node.insert(16)
+    val s = System.currentTimeMillis()
+    val node = BplusTree(256)
+    (1 until 100000).forEach { a ->
+        node.insert(a)
+    }
+    node.insert(-1)
+    val e = System.currentTimeMillis()
     node.show()
 
-    println(node.find(12))
+    println("time:${e - s}")
+    val ss = System.currentTimeMillis()
+    println(node.find(5000))
+    println(node.find(7000))
+    println(node.find(9000))
+    println(node.find(21000))
+    println(node.find(8000))
+    println(node.find(80000))
+    val ee = System.currentTimeMillis()
+    println("time:${ee - ss}")
 }
